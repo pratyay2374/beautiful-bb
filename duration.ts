@@ -10,3 +10,10 @@ export function until(ms: number): string {
   const days = Math.floor(hours / 24);
   return hours % 24 ? `${days}d ${hours % 24}h` : `${days}d`;
 }
+
+/** Time left within a few hours as "45m" or "4h 39m", for windows short enough that whole hours blur. */
+export function untilMinutes(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / MINUTE_MS));
+  const hours = Math.floor(minutes / 60);
+  return hours ? `${hours}h${minutes % 60 ? ` ${minutes % 60}m` : ""}` : `${minutes}m`;
+}

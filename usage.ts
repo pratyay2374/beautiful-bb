@@ -3,6 +3,9 @@ import { z } from "zod";
 
 export const PROVIDER_NAMES: Record<string, string> = { "claude-code": "Claude", codex: "Codex" };
 
+const limitSchema = z.object({ usedPercent: z.number(), resetsAt: z.string() });
+type Limit = z.infer<typeof limitSchema>;
+
 export const weeklyAccountSchema = z.object({
   id: z.string(),
   providerId: z.string(),
@@ -11,6 +14,7 @@ export const weeklyAccountSchema = z.object({
   accountLabel: z.string().nullable(),
   usedPercent: z.number(),
   resetsAt: z.string(),
+  fiveHour: limitSchema.nullable(),
 });
 export type WeeklyAccount = z.infer<typeof weeklyAccountSchema>;
 
@@ -38,6 +42,15 @@ const measurementSchema = z.object({
     z.object({ status: z.enum(["not_installed", "unauthenticated", "expired", "error"]) }),
   ]),
 });
+
+/** The account-wide window of one kind, if it has a reset time; per-model windows carry `model`. */
+export function accountLimit(
+  windows: ReadonlyArray<{ kind?: unknown; model?: unknown; usedPercent: number; resetsAt: string | null }>,
+  kind: "weekly" | "five-hour",
+): Limit | null {
+  const window = windows.find((window) => window.kind === kind && !window.model);
+  return window?.resetsAt ? { usedPercent: window.usedPercent, resetsAt: window.resetsAt } : null;
+}
 
 export function uniqueWeeklyAccounts(accounts: WeeklyAccount[]): WeeklyAccount[] {
   const seen = new Set<string>();
@@ -67,8 +80,8 @@ export async function pooledWeeklyUsage(bb: BbPluginApi): Promise<WeeklyAccount[
       outputSchema: measurementSchema,
     });
     if (measurement.usage.status !== "ok") return [];
-    const window = measurement.usage.windows.find((window) => window.kind === "weekly" && !window.model);
-    if (!window?.resetsAt) return [];
+    const weekly = accountLimit(measurement.usage.windows, "weekly");
+    if (!weekly) return [];
     const accountLabel = measurement.usage.accountEmail ?? resource.label;
     return [{
       id: `account-pool:${resource.id}`,
@@ -76,8 +89,8 @@ export async function pooledWeeklyUsage(bb: BbPluginApi): Promise<WeeklyAccount[
       name: PROVIDER_NAMES[resource.providerId] ?? resource.providerId,
       accountKey: measurement.accountKey ?? resource.accountKey,
       accountLabel,
-      usedPercent: window.usedPercent,
-      resetsAt: window.resetsAt,
+      ...weekly,
+      fiveHour: accountLimit(measurement.usage.windows, "five-hour"),
     }];
   }));
   return results.flatMap((result) => {

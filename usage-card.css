@@ -154,6 +154,24 @@ section:has(> div > div > .bbb-card) {
   font-variant-numeric: tabular-nums;
 }
 
+/* The 5-hour line tucks under its account's row and reads one step quieter. */
+.bbb-five {
+  height: 0.625rem;
+  margin-top: -0.1875rem;
+}
+.bbb-five-label {
+  font-size: 0.5625rem;
+  line-height: 1;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.bbb-five .bbb-bar {
+  height: 2px;
+}
+.bbb-five .bbb-pct {
+  font-weight: 500;
+}
+
 .bbb-empty {
   margin: 0;
   font-size: var(--text-xs, 0.75rem);

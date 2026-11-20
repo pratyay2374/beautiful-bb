@@ -16,7 +16,7 @@ import {
   WALLPAPER_IDS,
 } from "./wallpapers";
 import { dailyTokens, type DailyTokens } from "./tokens";
-import { pooledWeeklyUsage, PROVIDER_NAMES, uniqueWeeklyAccounts, weeklyAccountSchema } from "./usage";
+import { accountLimit, pooledWeeklyUsage, PROVIDER_NAMES, uniqueWeeklyAccounts, weeklyAccountSchema } from "./usage";
 import { dailyGains, dayBarSchema, dayBars, trackUsage } from "./usage-history";
 import { createSystemSampler, systemStatsSchema, topProcess } from "./system";
 import { prsResultSchema } from "./prs";
@@ -250,16 +250,15 @@ export default async function plugin(bb: BbPluginApi) {
       ]);
       const weekly = Object.entries(usage).flatMap(([id, entry]) => {
         if (entry.status !== "ok") return [];
-        // The account-wide weekly window; per-model weekly windows carry `model`.
-        const w = entry.windows.find((w) => w.kind === "weekly" && !("model" in w && w.model));
-        return w?.resetsAt ? [{
+        const limit = accountLimit(entry.windows, "weekly");
+        return limit ? [{
           id,
           providerId: id,
           name: PROVIDER_NAMES[id] ?? id,
           accountKey: "accountKey" in entry && typeof entry.accountKey === "string" ? entry.accountKey : null,
           accountLabel: entry.accountEmail ?? null,
-          usedPercent: w.usedPercent,
-          resetsAt: w.resetsAt,
+          ...limit,
+          fiveHour: accountLimit(entry.windows, "five-hour"),
         }] : [];
       });
       const now = Date.now();

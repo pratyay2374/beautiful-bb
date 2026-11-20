@@ -11,6 +11,7 @@ const measurement = {
     windows: [
       { kind: "weekly", model: "opus", usedPercent: 99, resetsAt: "2026-11-25T00:00:00Z" },
       { kind: "weekly", model: null, usedPercent: 23, resetsAt: "2026-11-26T00:00:00Z" },
+      { kind: "five-hour", model: null, usedPercent: 5, resetsAt: "2026-11-21T15:20:00Z" },
     ],
   },
 };
@@ -31,7 +32,7 @@ function pool({ enabled = true, resources = [resource], measure = () => measurem
   };
 }
 
-test("a pooled account shows its overall weekly quota and identity", async () => {
+test("a pooled account shows its overall weekly and 5-hour quotas and identity", async () => {
   const rows = await pooledWeeklyUsage(pool());
   assert.deepEqual(rows, [{
     id: "account-pool:second",
@@ -41,7 +42,14 @@ test("a pooled account shows its overall weekly quota and identity", async () =>
     accountLabel: "second@example.com",
     usedPercent: 23,
     resetsAt: "2026-11-26T00:00:00Z",
+    fiveHour: { usedPercent: 5, resetsAt: "2026-11-21T15:20:00Z" },
   }]);
+});
+
+test("an account without a 5-hour reading gets no 5-hour line", async () => {
+  const weeklyOnly = { ...measurement, usage: { ...measurement.usage, windows: measurement.usage.windows.slice(0, 2) } };
+  const [row] = await pooledWeeklyUsage(pool({ measure: () => weeklyOnly }));
+  assert.equal(row.fiveHour, null);
 });
 
 test("one account failing to refresh leaves other accounts visible", async () => {

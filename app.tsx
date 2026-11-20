@@ -1,7 +1,8 @@
 // Beautiful bb frontend entry. Registers every piece of the plugin: the PRs
 // card (prs-card.tsx), the system card (live CPU and memory) and the usage card
 // above the sidebar footer (one line per account: logo, weekly limit bar, 7-day
-// activity bars, percent used, time to reset), the home wallpaper and greeting,
+// activity bars, percent used, time to reset, plus a thin 5-hour line when the
+// account reports one), the home wallpaper and greeting,
 // the settings page, the effects overlay, and command-menu actions.
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -25,12 +26,13 @@ import { toggleColorMode } from "./color-mode";
 import { PrsCard } from "./prs-card";
 import { SystemCard } from "./system-card";
 import { usePreferences } from "./use-preferences";
-import { until } from "./duration";
+import { until, untilMinutes } from "./duration";
 
 const REFRESH_MS = 2 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const dayTime = new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });
+const clock = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
 const weekday = new Intl.DateTimeFormat(undefined, { weekday: "short" });
 const monthDay = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
 const points = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
@@ -86,30 +88,54 @@ function UsageBars({ daily, historySince, providerName, now }: { daily: DayBar[]
   );
 }
 
+/** A limit bar, filled with the shared value gradient sized to the whole track. */
+function LimitBar({ usedPercent }: { usedPercent: number }) {
+  const used = Math.min(Math.max(usedPercent, 0), 100);
+  return (
+    <span className="bbb-bar" aria-hidden="true">
+      <span style={{ width: `${used}%`, backgroundSize: `${used > 0 ? 10000 / used : 100}% 100%` }} />
+    </span>
+  );
+}
+
+function FiveHourRow({ limit, now }: { limit: NonNullable<HarnessUsage["fiveHour"]>; now: number }) {
+  const resetsAt = Date.parse(limit.resetsAt);
+  const label = `5-hour limit: ${limit.usedPercent}% · resets ${clock.format(resetsAt)}`;
+  return (
+    <li className="bbb-row bbb-five" title={label} aria-label={`${label}.`}>
+      <span className="bbb-five-label" aria-hidden="true">5h</span>
+      <LimitBar usedPercent={limit.usedPercent} />
+      <span />
+      <span className="bbb-pct">{limit.usedPercent}%</span>
+      <span className="bbb-in">{untilMinutes(resetsAt - now)}</span>
+    </li>
+  );
+}
+
 function HarnessRow({ h, now }: { h: HarnessUsage; now: number }) {
   const { providers } = useProviders();
   const provider = providers.find((provider) => provider.id === h.providerId) ?? { id: h.providerId };
   const name = h.accountLabel ? `${h.name} — ${h.accountLabel}` : h.name;
   const resetsAt = Date.parse(h.resetsAt);
-  const used = Math.min(Math.max(h.usedPercent, 0), 100);
   return (
-    <li
-      className="bbb-row"
-      title={name}
-      aria-label={`${name}: ${h.usedPercent}% of weekly limit used, resets ${dayTime.format(resetsAt)}.`}
-    >
-      <span className="bbb-icon" aria-hidden="true">
-        <ProviderIcon providerKind="agent" provider={provider} />
-      </span>
-      <span className="bbb-bar" aria-hidden="true">
-        <span style={{ width: `${used}%`, backgroundSize: `${used > 0 ? 10000 / used : 100}% 100%` }} />
-      </span>
-      <UsageBars daily={h.daily} historySince={h.historySince} providerName={h.name} now={now} />
-      <span className="bbb-pct">{h.usedPercent}%</span>
-      <span className="bbb-in" title={`Resets ${dayTime.format(resetsAt)}`}>
-        {until(resetsAt - now)}
-      </span>
-    </li>
+    <>
+      <li
+        className="bbb-row"
+        title={name}
+        aria-label={`${name}: ${h.usedPercent}% of weekly limit used, resets ${dayTime.format(resetsAt)}.`}
+      >
+        <span className="bbb-icon" aria-hidden="true">
+          <ProviderIcon providerKind="agent" provider={provider} />
+        </span>
+        <LimitBar usedPercent={h.usedPercent} />
+        <UsageBars daily={h.daily} historySince={h.historySince} providerName={h.name} now={now} />
+        <span className="bbb-pct">{h.usedPercent}%</span>
+        <span className="bbb-in" title={`Resets ${dayTime.format(resetsAt)}`}>
+          {until(resetsAt - now)}
+        </span>
+      </li>
+      {h.fiveHour && <FiveHourRow limit={h.fiveHour} now={now} />}
+    </>
   );
 }
 
