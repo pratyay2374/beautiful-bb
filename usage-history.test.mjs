@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { until, untilMinutes } from "./duration.ts";
+import { until } from "./duration.ts";
 import { dailyGains, dayBars, recordReading, trackUsage } from "./usage-history.ts";
 
 const HOUR = 60 * 60 * 1000;
@@ -113,10 +113,4 @@ test("reset labels roll over instead of showing 60m or 24h", () => {
   assert.equal(until(24 * HOUR + 23.6 * HOUR), "2d");
   assert.equal(until(2 * 24 * HOUR + 3.2 * HOUR), "2d 3h");
   assert.equal(until(5 * HOUR), "5h");
-});
-
-test("the 5-hour reset keeps its minutes so it never reads like the 5h label", () => {
-  assert.equal(untilMinutes(4.65 * HOUR), "4h 39m");
-  assert.equal(untilMinutes(59.7 * 60 * 1000), "1h");
-  assert.equal(untilMinutes(30 * 1000), "1m");
 });

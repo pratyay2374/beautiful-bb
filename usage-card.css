@@ -154,27 +154,17 @@ section:has(> div > div > .bbb-card) {
   font-variant-numeric: tabular-nums;
 }
 
-/* An account with a 5-hour limit stacks it under the weekly one: two thin bars
-   in the bar slot, and a small muted figure under each weekly figure. */
-.bbb-row[data-five] {
-  height: auto;
+/* An account with a 5-hour limit gets a short second bar beside the weekly
+   one. Its figures live only in the row's tooltip. */
+.bbb-pair {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
-.bbb-stack {
-  display: grid;
-  gap: 2px;
-}
-.bbb-stack > .bbb-bar {
-  height: 2px;
-}
-.bbb-row[data-five] :is(.bbb-pct, .bbb-in) {
-  display: grid;
-  gap: 1px;
-  line-height: 1;
-}
-.bbb-five {
-  font-size: 0.5625rem;
-  font-weight: 500;
-  color: var(--muted-foreground);
+.bbb-five-bar {
+  display: flex;
+  width: 0.875rem;
+  flex-shrink: 0;
 }
 
 .bbb-empty {

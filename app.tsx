@@ -1,8 +1,8 @@
 // Beautiful bb frontend entry. Registers every piece of the plugin: the PRs
 // card (prs-card.tsx), the system card (live CPU and memory) and the usage card
 // above the sidebar footer (one line per account: logo, weekly limit bar, 7-day
-// activity bars, percent used, time to reset; a second, 5-hour bar and figure
-// when the account reports one), the home wallpaper and greeting,
+// activity bars, percent used, time to reset; a short 5-hour bar beside the
+// weekly one when the account reports one), the home wallpaper and greeting,
 // the settings page, the effects overlay, and command-menu actions.
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -26,7 +26,7 @@ import { toggleColorMode } from "./color-mode";
 import { PrsCard } from "./prs-card";
 import { SystemCard } from "./system-card";
 import { usePreferences } from "./use-preferences";
-import { until, untilMinutes } from "./duration";
+import { until } from "./duration";
 
 const REFRESH_MS = 2 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -106,12 +106,11 @@ function HarnessRow({ h, now }: { h: HarnessUsage; now: number }) {
   const five = h.fiveHour;
   const fiveResetsAt = five ? Date.parse(five.resetsAt) : 0;
   const limits = five
-    ? `Weekly: ${h.usedPercent}% · resets ${dayTime.format(resetsAt)}\n5-hour: ${five.usedPercent}% · resets ${clock.format(fiveResetsAt)}`
+    ? `Weekly: ${h.usedPercent}% · resets ${dayTime.format(resetsAt)}\n5-hour limit: ${five.usedPercent}% · resets in ${until(fiveResetsAt - now)} (${clock.format(fiveResetsAt)})`
     : null;
   return (
     <li
       className="bbb-row"
-      data-five={five ? true : undefined}
       title={limits ? `${name}\n${limits}` : name}
       aria-label={limits
         ? `${name}: ${limits.replace("\n", ", ")}.`
@@ -121,19 +120,15 @@ function HarnessRow({ h, now }: { h: HarnessUsage; now: number }) {
         <ProviderIcon providerKind="agent" provider={provider} />
       </span>
       {five ? (
-        <span className="bbb-stack">
+        <span className="bbb-pair" aria-hidden="true">
           <LimitBar usedPercent={h.usedPercent} />
-          <LimitBar usedPercent={five.usedPercent} />
+          <span className="bbb-five-bar"><LimitBar usedPercent={five.usedPercent} /></span>
         </span>
       ) : <LimitBar usedPercent={h.usedPercent} />}
       <UsageBars daily={h.daily} historySince={h.historySince} providerName={h.name} now={now} />
-      <span className="bbb-pct">
-        {h.usedPercent}%
-        {five && <span className="bbb-five">{five.usedPercent}%</span>}
-      </span>
+      <span className="bbb-pct">{h.usedPercent}%</span>
       <span className="bbb-in" title={five ? undefined : `Resets ${dayTime.format(resetsAt)}`}>
         {until(resetsAt - now)}
-        {five && <span className="bbb-five">{untilMinutes(fiveResetsAt - now)}</span>}
       </span>
     </li>
   );
