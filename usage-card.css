@@ -154,22 +154,27 @@ section:has(> div > div > .bbb-card) {
   font-variant-numeric: tabular-nums;
 }
 
-/* The 5-hour line tucks under its account's row and reads one step quieter. */
-.bbb-five {
-  height: 0.625rem;
-  margin-top: -0.1875rem;
+/* An account with a 5-hour limit stacks it under the weekly one: two thin bars
+   in the bar slot, and a small muted figure under each weekly figure. */
+.bbb-row[data-five] {
+  height: auto;
 }
-.bbb-five-label {
-  font-size: 0.5625rem;
-  line-height: 1;
-  text-align: center;
-  color: var(--muted-foreground);
+.bbb-stack {
+  display: grid;
+  gap: 2px;
 }
-.bbb-five .bbb-bar {
+.bbb-stack > .bbb-bar {
   height: 2px;
 }
-.bbb-five .bbb-pct {
+.bbb-row[data-five] :is(.bbb-pct, .bbb-in) {
+  display: grid;
+  gap: 1px;
+  line-height: 1;
+}
+.bbb-five {
+  font-size: 0.5625rem;
   font-weight: 500;
+  color: var(--muted-foreground);
 }
 
 .bbb-empty {

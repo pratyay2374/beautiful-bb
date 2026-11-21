@@ -1,8 +1,8 @@
 // Beautiful bb frontend entry. Registers every piece of the plugin: the PRs
 // card (prs-card.tsx), the system card (live CPU and memory) and the usage card
 // above the sidebar footer (one line per account: logo, weekly limit bar, 7-day
-// activity bars, percent used, time to reset, plus a thin 5-hour line when the
-// account reports one), the home wallpaper and greeting,
+// activity bars, percent used, time to reset; a second, 5-hour bar and figure
+// when the account reports one), the home wallpaper and greeting,
 // the settings page, the effects overlay, and command-menu actions.
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -98,44 +98,44 @@ function LimitBar({ usedPercent }: { usedPercent: number }) {
   );
 }
 
-function FiveHourRow({ limit, now }: { limit: NonNullable<HarnessUsage["fiveHour"]>; now: number }) {
-  const resetsAt = Date.parse(limit.resetsAt);
-  const label = `5-hour limit: ${limit.usedPercent}% · resets ${clock.format(resetsAt)}`;
-  return (
-    <li className="bbb-row bbb-five" title={label} aria-label={`${label}.`}>
-      <span className="bbb-five-label" aria-hidden="true">5h</span>
-      <LimitBar usedPercent={limit.usedPercent} />
-      <span />
-      <span className="bbb-pct">{limit.usedPercent}%</span>
-      <span className="bbb-in">{untilMinutes(resetsAt - now)}</span>
-    </li>
-  );
-}
-
 function HarnessRow({ h, now }: { h: HarnessUsage; now: number }) {
   const { providers } = useProviders();
   const provider = providers.find((provider) => provider.id === h.providerId) ?? { id: h.providerId };
   const name = h.accountLabel ? `${h.name} — ${h.accountLabel}` : h.name;
   const resetsAt = Date.parse(h.resetsAt);
+  const five = h.fiveHour;
+  const fiveResetsAt = five ? Date.parse(five.resetsAt) : 0;
+  const limits = five
+    ? `Weekly: ${h.usedPercent}% · resets ${dayTime.format(resetsAt)}\n5-hour: ${five.usedPercent}% · resets ${clock.format(fiveResetsAt)}`
+    : null;
   return (
-    <>
-      <li
-        className="bbb-row"
-        title={name}
-        aria-label={`${name}: ${h.usedPercent}% of weekly limit used, resets ${dayTime.format(resetsAt)}.`}
-      >
-        <span className="bbb-icon" aria-hidden="true">
-          <ProviderIcon providerKind="agent" provider={provider} />
+    <li
+      className="bbb-row"
+      data-five={five ? true : undefined}
+      title={limits ? `${name}\n${limits}` : name}
+      aria-label={limits
+        ? `${name}: ${limits.replace("\n", ", ")}.`
+        : `${name}: ${h.usedPercent}% of weekly limit used, resets ${dayTime.format(resetsAt)}.`}
+    >
+      <span className="bbb-icon" aria-hidden="true">
+        <ProviderIcon providerKind="agent" provider={provider} />
+      </span>
+      {five ? (
+        <span className="bbb-stack">
+          <LimitBar usedPercent={h.usedPercent} />
+          <LimitBar usedPercent={five.usedPercent} />
         </span>
-        <LimitBar usedPercent={h.usedPercent} />
-        <UsageBars daily={h.daily} historySince={h.historySince} providerName={h.name} now={now} />
-        <span className="bbb-pct">{h.usedPercent}%</span>
-        <span className="bbb-in" title={`Resets ${dayTime.format(resetsAt)}`}>
-          {until(resetsAt - now)}
-        </span>
-      </li>
-      {h.fiveHour && <FiveHourRow limit={h.fiveHour} now={now} />}
-    </>
+      ) : <LimitBar usedPercent={h.usedPercent} />}
+      <UsageBars daily={h.daily} historySince={h.historySince} providerName={h.name} now={now} />
+      <span className="bbb-pct">
+        {h.usedPercent}%
+        {five && <span className="bbb-five">{five.usedPercent}%</span>}
+      </span>
+      <span className="bbb-in" title={five ? undefined : `Resets ${dayTime.format(resetsAt)}`}>
+        {until(resetsAt - now)}
+        {five && <span className="bbb-five">{untilMinutes(fiveResetsAt - now)}</span>}
+      </span>
+    </li>
   );
 }
 
