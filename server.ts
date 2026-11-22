@@ -21,6 +21,7 @@ import { dailyGains, dayBarSchema, dayBars, trackUsage } from "./usage-history";
 import { createSystemSampler, systemStatsSchema, topProcess } from "./system";
 import { prsResultSchema } from "./prs";
 import { myPullRequests, openInBrowser } from "./prs-source";
+import { favicon, linkPreview } from "./link-preview-source";
 
 const TOKENS_TTL_MS = 5 * 60 * 1000;
 /** Realtime channel: published whenever a setting changes, so every window re-applies. */
@@ -95,6 +96,7 @@ const preferencesSchema = z.object({
   /** UI font: "theme", "inter", or "google:<Family>"; see fonts.ts. */
   font: z.string().transform(normalizeFont),
   wallpaper: z.enum(WALLPAPER_IDS),
+  linkPreviews: z.boolean(),
 });
 export type Preferences = z.infer<typeof preferencesSchema>;
 
@@ -167,6 +169,12 @@ export default async function plugin(bb: BbPluginApi) {
       description: "The home wallpaper's pattern rising from the bottom of the navigation rail, in the wallpaper color.",
       default: true,
     },
+    linkPreviews: {
+      type: "boolean",
+      label: "Link previews",
+      description: "Show a site icon and a short label on links in messages, and a preview card on hover. GitHub links read through the gh CLI.",
+      default: true,
+    },
     homeGreeting: {
       type: "boolean",
       label: "Home greeting",
@@ -236,6 +244,19 @@ export default async function plugin(bb: BbPluginApi) {
   }
 
   const system = createSystemSampler();
+
+  // Link previews: plain GETs, so the content script can point an <img> at the favicon.
+  bb.http.route("GET", "/favicon", async (c) => {
+    const icon = await favicon(bb.storage.kv, (c.req.query("domain") ?? "").toLowerCase());
+    if (!icon) return new Response(null, { status: 404, headers: { "cache-control": "max-age=3600" } });
+    return new Response(Buffer.from(icon.base64, "base64"), {
+      headers: { "content-type": icon.type, "cache-control": "max-age=86400" },
+    });
+  });
+  bb.http.route("GET", "/link-preview", async (c) => {
+    const preview = await linkPreview(bb.storage.kv, c.req.query("url") ?? "").catch(() => null);
+    return c.json(preview);
+  });
 
   bb.rpc.register(rpcContract, {
     system_stats: () => system.snapshot(),

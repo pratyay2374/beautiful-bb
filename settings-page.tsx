@@ -381,6 +381,11 @@ export function SettingsPage() {
           control={<Switch label="Usage card" checked={prefs.usageCard} onChange={(v) => update({ usageCard: v })} />}
         />
         <Row
+          title="Link previews"
+          detail="A site icon and a short label on links in messages, and a preview card on hover. GitHub links show the PR or issue state through the gh CLI."
+          control={<Switch label="Link previews" checked={prefs.linkPreviews} onChange={(v) => update({ linkPreviews: v })} />}
+        />
+        <Row
           title="Agent activity"
           detail="A small wave on working threads, and sparkles when one finishes."
           control={<Switch label="Agent activity" checked={prefs.agentActivity} onChange={(v) => update({ agentActivity: v })} />}

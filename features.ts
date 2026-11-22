@@ -7,10 +7,11 @@ import type {
 } from "@get-bb/plugin-sdk/app";
 import type { Preferences } from "./server";
 import { applyTypography } from "./typography";
+import { setLinkPreviews } from "./link-previews";
 
 export type FeatureSwitches = Pick<
   Preferences,
-  "usageCard" | "systemCard" | "prsCard" | "waveSpinner" | "composerGlow" | "agentActivity" | "font" | "fontScale"
+  "usageCard" | "systemCard" | "prsCard" | "waveSpinner" | "composerGlow" | "agentActivity" | "font" | "fontScale" | "linkPreviews"
 >;
 
 let usageCard: ExperimentalSidebarFooterDisclosureController | null = null;
@@ -61,6 +62,7 @@ export function applyFeatures(features: FeatureSwitches) {
   root.toggleAttribute("data-bbb-glow", features.composerGlow);
   root.toggleAttribute("data-bbb-activity", features.agentActivity);
   applyTypography(features);
+  setLinkPreviews(features.linkPreviews);
 }
 
 type RowStatusSetter = (threadId: string, status: PluginComposerThreadRowStatus | null) => void;

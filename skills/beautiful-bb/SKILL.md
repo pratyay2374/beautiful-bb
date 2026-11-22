@@ -19,3 +19,13 @@ Edit `themes/<name>.src.css`, never the generated `themes/<name>.css`. Then run
 bb's 256 KB stylesheet limit.
 
 Token reference: the bb-cli skill's `references/theming.md`.
+
+## Link previews
+
+The "Link previews" setting (on by default) puts a favicon before each link in
+chat messages, shortens raw URLs (`owner/repo#168`), and shows a hover card.
+The plugin server fetches favicons and page titles (https only, no cookies) and
+caches them in plugin KV: favicons for a week, pages for a day, GitHub for an
+hour. GitHub PRs, issues and commits are read through `gh api`, PRs from
+`~/.cache/bb-prs/open-prs.json` first. Routes:
+`/api/v1/plugins/beautiful-bb/http/favicon?domain=` and `/link-preview?url=`.

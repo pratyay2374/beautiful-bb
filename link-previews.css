@@ -1,0 +1,120 @@
+/* Link previews: a favicon in front of each message link, and the hover card.
+   The card shares the sidebar cards' surface, border, radius and shadow.
+   PR state is gray when open or draft, bb's merged color when merged, and the
+   theme's destructive color when closed. */
+
+.bbb-link-icon {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.25rem;
+  border-radius: 0.25rem;
+  vertical-align: -0.1875rem;
+}
+a[data-bbb-link] {
+  text-decoration-color: color-mix(in oklab, currentColor 35%, transparent);
+}
+a[data-bbb-link-short] {
+  white-space: nowrap;
+}
+a[data-bbb-link]:hover {
+  text-decoration-color: currentColor;
+}
+
+.bbb-link-card {
+  position: fixed;
+  z-index: 60;
+  box-sizing: border-box;
+  width: min(22rem, calc(100vw - 1rem));
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--sidebar-border, var(--border));
+  border-radius: var(--radius-lg, 0.625rem);
+  background: color-mix(in oklab, var(--sidebar-accent, var(--muted)) 50%, var(--sidebar, var(--background)));
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+  box-shadow: var(--shadow-lift, 0 0.25rem 0.75rem -0.25rem color-mix(in oklab, black 18%, transparent));
+  pointer-events: auto;
+  opacity: 0;
+  translate: 0 0.25rem;
+  transition:
+    opacity 150ms var(--bbb-ease-out, ease-out),
+    translate 150ms var(--bbb-ease-out, ease-out);
+}
+.bbb-link-card[data-open] {
+  opacity: 1;
+  translate: 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bbb-link-card {
+    translate: none;
+  }
+}
+
+.bbb-link-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  color: var(--muted-foreground);
+}
+.bbb-link-card-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border-radius: 0.25rem;
+}
+.bbb-link-card-domain {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bbb-link-card-title {
+  display: -webkit-box;
+  margin-top: 0.375rem;
+  overflow: hidden;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.bbb-link-card-desc {
+  display: -webkit-box;
+  margin-top: 0.25rem;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.bbb-link-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.bbb-link-card-state {
+  padding: 0.0625rem 0.375rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  text-transform: capitalize;
+}
+.bbb-link-card-state[data-state="draft"] {
+  opacity: 0.75;
+}
+.bbb-link-card-state[data-state="merged"] {
+  color: var(--pr-merged, var(--muted-foreground));
+}
+.bbb-link-card-state[data-state="closed"] {
+  color: var(--destructive);
+}
+.bbb-link-card-add,
+.bbb-link-card-del {
+  color: var(--muted-foreground);
+}
+.bbb-link-card-del {
+  margin-left: -0.25rem;
+}

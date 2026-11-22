@@ -12,9 +12,9 @@ import { parsePullRequests, type PrsResult } from "./prs";
 
 /** bb launched from the Dock gets a bare PATH; look where Homebrew installs gh too. */
 const PATH = [process.env.PATH, "/opt/homebrew/bin", "/usr/local/bin"].filter(Boolean).join(delimiter);
-const CACHE_DIR = join(homedir(), ".cache", "bb-prs");
+export const CACHE_DIR = join(homedir(), ".cache", "bb-prs");
 
-async function gh(args: string[]): Promise<GhResult> {
+export async function gh(args: string[]): Promise<GhResult> {
   try {
     const { stdout, stderr } = await promisify(execFile)("gh", args, {
       timeout: 15_000,

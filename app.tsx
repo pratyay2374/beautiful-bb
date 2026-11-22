@@ -3,7 +3,8 @@
 // above the sidebar footer (one line per account: logo, weekly limit bar, 7-day
 // activity bars, percent used, time to reset; a short 5-hour bar beside the
 // weekly one when the account reports one), the home wallpaper and greeting,
-// the settings page, the effects overlay, and command-menu actions.
+// the settings page, the effects overlay, link previews in messages, and
+// command-menu actions.
 import { useCallback, useEffect, useState } from "react";
 import {
   definePluginApp,
@@ -17,6 +18,7 @@ import "./working-spinner.css";
 import { HomeWallpaper } from "./wallpaper";
 import { footerCardsClosed, setRowStatusSetter, setUsageCardController, toggleFocusMode } from "./features";
 import { mountTypography } from "./typography";
+import { mountLinkPreviews } from "./link-previews";
 import { SettingsPage } from "./settings-page";
 import { EffectsOverlay } from "./overlay";
 import { HomeGreeting } from "./greeting";
@@ -232,6 +234,7 @@ export default definePluginApp((app) => {
   // Only a content script may decorate thread rows; hand its setter to the
   // effects overlay, which marks working threads.
   app.contentScripts.register({ id: "typography", mount: mountTypography });
+  app.contentScripts.register({ id: "link-previews", mount: mountLinkPreviews });
   app.contentScripts.register({
     id: "thread-row-status",
     mount(context) {
