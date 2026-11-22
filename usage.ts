@@ -81,6 +81,7 @@ export async function pooledWeeklyUsage(bb: BbPluginApi): Promise<WeeklyAccount[
     });
     if (measurement.usage.status !== "ok") return [];
     const weekly = accountLimit(measurement.usage.windows, "weekly");
+    const fiveHour = accountLimit(measurement.usage.windows, "five-hour");
     if (!weekly) return [];
     const accountLabel = measurement.usage.accountEmail ?? resource.label;
     return [{
@@ -90,7 +91,7 @@ export async function pooledWeeklyUsage(bb: BbPluginApi): Promise<WeeklyAccount[
       accountKey: measurement.accountKey ?? resource.accountKey,
       accountLabel,
       ...weekly,
-      fiveHour: accountLimit(measurement.usage.windows, "five-hour"),
+      fiveHour,
     }];
   }));
   return results.flatMap((result) => {
